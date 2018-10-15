@@ -125,7 +125,7 @@ abstract class AbstractIndexHandler
         $data = $response->getData(true);
 
         if (isset($data['meta']['total_count'])) {
-            $data['meta']['meta-total'] = count($data['data']);
+            $data['meta']['meta-total'] = $data['meta']['total_count'];
             unset($data['meta']['total_count']);
         }
 
