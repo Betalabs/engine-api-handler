@@ -18,6 +18,10 @@ abstract class AbstractIndexHandler
     /**
      * @var array
      */
+    private $sortParam = [];
+    /**
+     * @var array
+     */
     protected $fullTextSearchColumns = [];
     /**
      * @var array
@@ -83,6 +87,12 @@ abstract class AbstractIndexHandler
             $this->makeQueryParamExceptions($query);
             $query["_fields"] = str_replace("->", ".", $query["_fields"]);
         }
+
+        if(isset($query['_sort']) && strpos($query['_sort'], '->') !== false) {
+            $this->makeSortParam($query['_sort']);
+            $query['_sort'] = '-id';
+        }
+
         $this->filterApproach = $query['_filter-approach'] ?? "";
         $this->parseFilters();
         $query = array_except($query, $this->queryParamExceptions);
@@ -94,6 +104,12 @@ abstract class AbstractIndexHandler
         }
 
         $this->queryParams = $query;
+    }
+
+    private function makeSortParam($param)
+    {
+        $this->sortParam['order'] = starts_with($param, '-') ? 'DESC' : 'ASC';
+        $this->sortParam['by'] = array_filter(preg_split("/(-|>)/", $param));
     }
 
     /**
@@ -123,6 +139,8 @@ abstract class AbstractIndexHandler
     private function adaptResponse(JsonResponse $response): JsonResponse
     {
         $data = $response->getData(true);
+
+        $this->sortByRelationField($data);
 
         if (isset($data['meta']['total_count'])) {
             $data['meta']['meta-total'] = $data['meta']['total_count'];
@@ -250,5 +268,50 @@ abstract class AbstractIndexHandler
                 $this->queryParamExceptions[] = $field;
             }
         }
+    }
+
+    /**
+     * Sort by relation field
+     *
+     * @param $data
+     */
+    private function sortByRelationField(&$data): void
+    {
+        if(empty($this->sortParam)) {
+            return;
+        }
+
+        usort($data["data"], function ($a, $b) {
+
+            foreach ($this->sortParam['by'] as $param) {
+                if(!isset($a[$param])) {
+                    return 1;
+                }
+                if(!isset($b[$param])) {
+                    return -1;
+                }
+                $a = $a[$param];
+                $b = $b[$param];
+            }
+
+            if ($a == $b) {
+                return 0;
+            }
+
+            if (is_numeric($a) && is_numeric($b)) {
+                if ($this->sortParam['order'] == 'ASC') {
+                    return ($a < $b) ? -1 : 1;
+                }
+
+                return ($a < $b) ? 1 : -1;
+            }
+
+            if ($this->sortParam['order'] == 'ASC') {
+                return strcmp($a, $b);
+            }
+
+            return strcmp($b, $a);
+
+        });
     }
 }
