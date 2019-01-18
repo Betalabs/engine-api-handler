@@ -27,6 +27,14 @@ abstract class AbstractIndexHandler
      * @var array
      */
     protected $queryParamExceptions = [];
+    /**
+     * @var int
+     */
+    protected $limit = 10;
+    /**
+     * @var int
+     */
+    protected $offset = 0;
 
     /**
      * @const array
@@ -82,6 +90,16 @@ abstract class AbstractIndexHandler
     private function makeQueryParams(): void
     {
         $query = Input::get();
+
+        if(isset($query['_limit'])) {
+            $this->limit = $query['_limit'];
+            unset($query['_limit']);
+        }
+
+        if(isset($query['_offset'])) {
+            $this->offset = $query['_offset'];
+            unset($query['_offset']);
+        }
 
         if(isset($query["_fields"])) {
             $this->makeQueryParamExceptions($query);
@@ -141,7 +159,7 @@ abstract class AbstractIndexHandler
         $data = $response->getData(true);
 
         $this->sortByRelationField($data);
-
+        $data["data"] = array_slice($data["data"], $this->offset, $this->limit);
         if (isset($data['meta']['total_count'])) {
             $data['meta']['meta-total'] = $data['meta']['total_count'];
             unset($data['meta']['total_count']);
