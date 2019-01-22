@@ -27,14 +27,6 @@ abstract class AbstractIndexHandler
      * @var array
      */
     protected $queryParamExceptions = [];
-    /**
-     * @var int
-     */
-    protected $limit = 10;
-    /**
-     * @var int
-     */
-    protected $offset = 0;
 
     /**
      * @const array
@@ -91,19 +83,9 @@ abstract class AbstractIndexHandler
     {
         $query = Input::get();
 
-        if(isset($query['_limit'])) {
-            $this->limit = $query['_limit'];
-            unset($query['_limit']);
-        }
-
-        if(isset($query['_offset'])) {
-            $this->offset = $query['_offset'];
-            unset($query['_offset']);
-        }
-
         if(isset($query["_fields"])) {
             $this->makeQueryParamExceptions($query);
-            $query["_fields"] = str_replace("->", ".", $query["_fields"]);
+            unset($query["_fields"]);
         }
 
         if(isset($query['_sort']) && strpos($query['_sort'], '->') !== false) {
@@ -112,7 +94,7 @@ abstract class AbstractIndexHandler
         }
 
         $this->filterApproach = $query['_filter-approach'] ?? "";
-        $this->parseFilters();
+        $this->parseFilters($query);
         $query = array_except($query, $this->queryParamExceptions);
 
         if (isset($query['_config'])
@@ -137,14 +119,15 @@ abstract class AbstractIndexHandler
      */
     public function execute(): JsonResponse
     {
-        $response = (new ApiHandler())->parseMultiple(
+        $apiHandler = (new ApiHandler())->parseMultiple(
             $this->buildQuery(),
             $this->fullTextSearchColumns,
             $this->queryParams,
             $this->queryRelatedFields ?: false
-        )->getResponse();
+        );
+        $this->sortByRelationField($apiHandler->getBuilder());
 
-        return $this->adaptResponse($response);
+        return $this->adaptResponse($apiHandler->getResponse());
     }
 
     /**
@@ -158,8 +141,6 @@ abstract class AbstractIndexHandler
     {
         $data = $response->getData(true);
 
-        $this->sortByRelationField($data);
-        $data["data"] = array_slice($data["data"], $this->offset, $this->limit);
         if (isset($data['meta']['total_count'])) {
             $data['meta']['meta-total'] = $data['meta']['total_count'];
             unset($data['meta']['total_count']);
@@ -178,7 +159,7 @@ abstract class AbstractIndexHandler
     /**
      * Parse filters from GET params
      */
-    protected function parseFilters()
+    protected function parseFilters(&$query)
     {
         $queryFields = array_diff_key(Input::get(), array_flip(AbstractIndexHandler::RESERVED_WORDS));
 
@@ -197,6 +178,9 @@ abstract class AbstractIndexHandler
                     $this->queryParamExceptions[] = $key;
                 }
                 $this->queryRelatedFields[$key] = $field;
+            } else if(method_exists($this, "setJoins")) {
+                $query[static::TABLE_NAME . "." . $key] = $query[$key];
+                unset($query[$key]);
             }
         }
     }
@@ -291,45 +275,15 @@ abstract class AbstractIndexHandler
     /**
      * Sort by relation field
      *
-     * @param $data
+     * @param $builder
      */
-    private function sortByRelationField(&$data): void
+    private function sortByRelationField($builder): void
     {
         if(empty($this->sortParam)) {
             return;
         }
-
-        usort($data["data"], function ($a, $b) {
-
-            foreach ($this->sortParam['by'] as $param) {
-                if(!isset($a[$param])) {
-                    return 1;
-                }
-                if(!isset($b[$param])) {
-                    return -1;
-                }
-                $a = $a[$param];
-                $b = $b[$param];
-            }
-
-            if ($a == $b) {
-                return 0;
-            }
-
-            if (is_numeric($a) && is_numeric($b)) {
-                if ($this->sortParam['order'] == 'ASC') {
-                    return ($a < $b) ? -1 : 1;
-                }
-
-                return ($a < $b) ? 1 : -1;
-            }
-
-            if ($this->sortParam['order'] == 'ASC') {
-                return strcmp($a, $b);
-            }
-
-            return strcmp($b, $a);
-
-        });
+        $parsedSortParamBy = implode(".", $this->sortParam["by"]);
+        $builder->getQuery()->orders = null;
+        $builder->orderBy($parsedSortParamBy, $this->sortParam["order"]);
     }
 }
