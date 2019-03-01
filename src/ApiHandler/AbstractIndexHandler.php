@@ -120,7 +120,7 @@ abstract class AbstractIndexHandler
     public function execute(): JsonResponse
     {
         $apiHandler = (new ApiHandler())->parseMultiple(
-            $this->buildQuery(),
+            $this->buildQuery()->distinct(),
             $this->fullTextSearchColumns,
             $this->queryParams,
             $this->queryRelatedFields ?: false
