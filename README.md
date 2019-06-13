@@ -12,6 +12,9 @@
     For the correct functioning of the package, you must separate the related tables using "->" in the URL, instead of 
     ".". You must also name the Eloquent methods of each related table using the exact same name of that table in the Database.
 </p>
+<p>
+    You also have to put the file apihandler.php inside the config folder of your laravel project.
+</p>
 
 ## Installation
 
