@@ -46,6 +46,8 @@ class ApiHandler extends OriginalApiHandler
         if ($queryParams === false) {
             $queryParams = Input::get();
         }
+    
+        $queryParams['_config'] = 'meta-total,meta-total-count,meta-filter-count';
 
         $parser = new Parser($queryBuilder, $queryParams);
         $parser->parse($fullTextSearchColumns, true, $relatedFields);
