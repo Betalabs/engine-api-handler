@@ -150,6 +150,11 @@ abstract class AbstractIndexHandler
             $data['meta']['meta-total'] = $data['meta']['filter_count'];
             unset($data['meta']['filter_count']);
         }
+        
+        if (isset($data['meta']['base_model_total']) ) {
+           $data['meta']['meta-total'] = $data['meta']['base_model_total'];
+           unset($data['meta']['base_model_total']);
+        }
 
         return $response->setData($data);
     }

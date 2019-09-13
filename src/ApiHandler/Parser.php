@@ -215,4 +215,17 @@ class Parser extends OriginalParser
         }
     }
 
+    /**
+     * Parse the meta parameter and prepare an array of meta provider objects.
+     *
+     * @param  array $metaParam
+     * @return void
+     */
+    protected function parseConfig($configParam)
+    {
+        parent::parseConfig($configParam);
+        $this->meta[] = resolve(ModelCountMetaProvider::class)->setBuilder($this->builder);
+    }
+
+
 }
