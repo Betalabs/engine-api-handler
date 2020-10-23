@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Betalabs\EngineApiHandler\ApiHandler;
-
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Input;
 
 abstract class AbstractIndexHandler
 {
@@ -81,7 +78,7 @@ abstract class AbstractIndexHandler
      */
     private function makeQueryParams(): void
     {
-        $query = Input::get();
+        $query = \Request::input();
 
         if(isset($query["_fields"])) {
             $this->makeQueryParamExceptions($query);
@@ -150,10 +147,10 @@ abstract class AbstractIndexHandler
             $data['meta']['meta-total'] = $data['meta']['filter_count'];
             unset($data['meta']['filter_count']);
         }
-        
+
         if (isset($data['meta']['base_model_total']) ) {
-           $data['meta']['meta-total'] = $data['meta']['base_model_total'];
-           unset($data['meta']['base_model_total']);
+            $data['meta']['meta-total'] = $data['meta']['base_model_total'];
+            unset($data['meta']['base_model_total']);
         }
 
         return $response->setData($data);
@@ -171,7 +168,7 @@ abstract class AbstractIndexHandler
      */
     protected function parseFilters(&$query)
     {
-        $queryFields = array_diff_key(Input::get(), array_flip(AbstractIndexHandler::RESERVED_WORDS));
+        $queryFields = array_diff_key(\Request::input(), array_flip(AbstractIndexHandler::RESERVED_WORDS));
 
         foreach ($queryFields as $key => $field) {
             $count = 0;
@@ -222,7 +219,7 @@ abstract class AbstractIndexHandler
             $parsedKey = $this->parseKey($key);
             list($relation, $column) = $parsedKey;
             $operation = $parsedKey[2] ?? "equal";
-            $relatedModelsField = str_replace("*", "%", Input::get($key));
+            $relatedModelsField = str_replace("*", "%", \Request::get($key));
             $query->whereHas($relation, function ($query) use ($relatedModelsField, $relation, $column, $operation) {
                 $query->where($column, AbstractIndexHandler::SUPPORTED_OPERATIONS[$operation], $relatedModelsField);
             });
@@ -242,7 +239,7 @@ abstract class AbstractIndexHandler
             $parsedKey = $this->parseKey($key);
             list($relation, $column) = $parsedKey;
             $operation = $parsedKey[2] ?? "equal";
-            $relatedModelsField = str_replace("*", "%", Input::get($key));
+            $relatedModelsField = str_replace("*", "%", \Request::get($key));
             if ($i == 0) {
                 $query->whereHas($relation, function ($query) use ($relatedModelsField, $relation, $column, $operation, $i) {
                     $query->where($column, AbstractIndexHandler::SUPPORTED_OPERATIONS[$operation], $relatedModelsField);
