@@ -2,7 +2,7 @@
 
 namespace Betalabs\EngineApiHandler\ApiHandler;
 
-use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Request;
 use Marcelgwerder\ApiHandler\Result;
 use Marcelgwerder\ApiHandler\ApiHandler as OriginalApiHandler;
 
@@ -22,7 +22,7 @@ class ApiHandler extends OriginalApiHandler
     public function parseSingle($queryBuilder, $identification, $queryParams = false)
     {
         if ($queryParams === false) {
-            $queryParams = Input::get();
+            $queryParams = Request::all();
         }
 
         $parser = new Parser($queryBuilder, $queryParams);
@@ -44,7 +44,7 @@ class ApiHandler extends OriginalApiHandler
     public function parseMultiple($queryBuilder, $fullTextSearchColumns = array(), $queryParams = false, $relatedFields = false)
     {
         if ($queryParams === false) {
-            $queryParams = Input::get();
+            $queryParams = Request::all();
         }
     
         $queryParams['_config'] = 'meta-total,meta-total-count,meta-filter-count';

@@ -7,6 +7,7 @@ use App\Http\Requests\FieldStructure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Str;
 
 class Join
 {
@@ -101,11 +102,11 @@ class Join
      */
     protected function addMorphToMany(
         MorphToMany $relation,
-        string $table = null
+        ?string $table = null
     ) {
 
         $primaryTable = $relation->getTable();
-        $primaryTableAlias = str_random(5);
+        $primaryTableAlias = Str::random(5);
 
         $this->fieldAliases[$primaryTableAlias] = $primaryTable;
 
@@ -127,7 +128,7 @@ class Join
         });
 
         $secondaryTable = $table ?? $relation->getRelationName();
-        $secondaryTableAlias = str_random(5);
+        $secondaryTableAlias = Str::random(5);
 
         $this->fieldAliases[$secondaryTableAlias] = $secondaryTable;
 
@@ -159,7 +160,7 @@ class Join
             /*
              * In this case the foreign key is in this table
              */
-            $otherTableKey = $table . '.' . $value->getRelation()->getOwnerKey();
+            $otherTableKey = $table . '.' . $value->getRelation()->getOwnerKeyName();
         }
 
         $this->query->leftJoin(

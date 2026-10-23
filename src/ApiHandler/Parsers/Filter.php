@@ -3,6 +3,7 @@
 namespace Betalabs\EngineApiHandler\ApiHandler\Parsers;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Arr;
 
 class Filter
 {
@@ -148,7 +149,8 @@ class Filter
                         $this->query->where(function ($query) use ($columns, $comparator, $value) {
                             foreach ($columns as $column) {
                                 if ($comparator == 'NULL' || $comparator == 'NOT NULL') {
-                                    $query->orWhereNull($column, 'and', $comparator == 'NOT NULL');
+                                    // orWhereNull() has no "not" argument: NOT NULL became IS NULL
+                                    $query->whereNull($column, 'or', $comparator == 'NOT NULL');
                                 } else {
                                     $query->orWhere($column, $comparator, $value);
                                 }
@@ -224,7 +226,8 @@ class Filter
                 $values = explode('|', $filterParamValue);
 
                 if (count($values) > 1) {
-                    $this->query->where(function ($query) use ($column, $comparator, $values) {
+                    // $orWhere by reference: without it the values were dropped (no filter at all)
+                    $this->query->where(function ($query) use ($column, $comparator, $values, &$orWhere) {
                         foreach ($values as $value) {
                             if ($comparator == 'LIKE' || $comparator == 'NOT LIKE') {
                                 $value = preg_replace('/(^\*|\*$)/', '%', $value);
@@ -246,7 +249,8 @@ class Filter
                     }
 
                     if ($comparator == 'NULL' || $comparator == 'NOT NULL') {
-                        $this->query->orWhereNull($column, 'and', $comparator == 'NOT NULL');
+                        // orWhereNull() has no "not" argument: NOT NULL became IS NULL
+                        $this->query->whereNull($column, 'or', $comparator == 'NOT NULL');
                     } else {
                         $orWhere[] = [$column, $comparator, $value];
                     }
@@ -290,7 +294,7 @@ class Filter
     {
 
         foreach ($filterParams as $key => $filterParam) {
-            array_forget($filterParams, $key);
+            Arr::forget($filterParams, $key);
             $filterParams[$this->replaceQualifiedAlias($key)] = $filterParam;
         }
 

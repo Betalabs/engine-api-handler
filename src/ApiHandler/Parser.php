@@ -40,8 +40,8 @@ class Parser extends OriginalParser
     public function __construct(
         $builder,
         array $params,
-        Join $joinParser = null,
-        With $withParser = null
+        ?Join $joinParser = null,
+        ?With $withParser = null
     ) {
         parent::__construct($builder, $params);
 

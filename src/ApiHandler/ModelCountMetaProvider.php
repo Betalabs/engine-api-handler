@@ -22,13 +22,22 @@ class ModelCountMetaProvider extends MetaProvider
      */
     public function get()
     {
+        // A relation (not an Eloquent builder) has no count here; checked
+        // first because its getQuery() has no "bindings" property
+        if(!$this->builder instanceof Builder) {
+            return null;
+        }
+
         $this->builder->getQuery()->joins = null;
         $this->builder->getQuery()->orders = null;
         $this->builder->getQuery()->offset = null;
-        if($this->builder instanceof Builder) {
-            return $this->builder->count();
-        }
-        return null;
+
+        // Bindings of the removed joins/orders must go too: otherwise the
+        // count query sends more values than placeholders (PDO HY093)
+        $this->builder->getQuery()->bindings['join'] = [];
+        $this->builder->getQuery()->bindings['order'] = [];
+
+        return $this->builder->count();
     }
 
     /**
