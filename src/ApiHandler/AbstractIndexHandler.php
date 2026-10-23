@@ -221,7 +221,7 @@ abstract class AbstractIndexHandler
             $parsedKey = $this->parseKey($key);
             list($relation, $column) = $parsedKey;
             $operation = $parsedKey[2] ?? "equal";
-            $relatedModelsField = str_replace("*", "%", \Request::get($key));
+            $relatedModelsField = str_replace("*", "%", $field);
             $query->whereHas($relation, function ($query) use ($relatedModelsField, $relation, $column, $operation) {
                 $query->where($column, AbstractIndexHandler::SUPPORTED_OPERATIONS[$operation], $relatedModelsField);
             });
@@ -241,7 +241,7 @@ abstract class AbstractIndexHandler
             $parsedKey = $this->parseKey($key);
             list($relation, $column) = $parsedKey;
             $operation = $parsedKey[2] ?? "equal";
-            $relatedModelsField = str_replace("*", "%", \Request::get($key));
+            $relatedModelsField = str_replace("*", "%", $field);
             if ($i == 0) {
                 $query->whereHas($relation, function ($query) use ($relatedModelsField, $relation, $column, $operation, $i) {
                     $query->where($column, AbstractIndexHandler::SUPPORTED_OPERATIONS[$operation], $relatedModelsField);
