@@ -2,6 +2,8 @@
 
 namespace Betalabs\EngineApiHandler\ApiHandler\Parsers;
 
+use Illuminate\Support\Arr;
+
 trait QualifiedAlias
 {
 
@@ -21,7 +23,7 @@ trait QualifiedAlias
             return $key;
         }
 
-        $table = array_first(explode('.', $key));
+        $table = Arr::first(explode('.', $key));
 
         // Avoid "-" when sorting desc
         if(strpos($table, '-') === 0) {

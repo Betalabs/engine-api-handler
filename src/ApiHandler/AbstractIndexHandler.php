@@ -4,6 +4,8 @@ namespace Betalabs\EngineApiHandler\ApiHandler;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 abstract class AbstractIndexHandler
 {
@@ -92,7 +94,7 @@ abstract class AbstractIndexHandler
 
         $this->filterApproach = $query['_filter-approach'] ?? "";
         $this->parseFilters($query);
-        $query = array_except($query, $this->queryParamExceptions);
+        $query = Arr::except($query, $this->queryParamExceptions);
 
         if (isset($query['_config'])
             && strpos($query['_config'], 'meta-total') !== false
@@ -105,7 +107,7 @@ abstract class AbstractIndexHandler
 
     private function makeSortParam($param)
     {
-        $this->sortParam['order'] = starts_with($param, '-') ? 'DESC' : 'ASC';
+        $this->sortParam['order'] = Str::startsWith($param, '-') ? 'DESC' : 'ASC';
         $this->sortParam['by'] = array_filter(preg_split("/(-|>)/", $param));
     }
 
@@ -219,7 +221,7 @@ abstract class AbstractIndexHandler
             $parsedKey = $this->parseKey($key);
             list($relation, $column) = $parsedKey;
             $operation = $parsedKey[2] ?? "equal";
-            $relatedModelsField = str_replace("*", "%", \Request::get($key));
+            $relatedModelsField = str_replace("*", "%", $field);
             $query->whereHas($relation, function ($query) use ($relatedModelsField, $relation, $column, $operation) {
                 $query->where($column, AbstractIndexHandler::SUPPORTED_OPERATIONS[$operation], $relatedModelsField);
             });
@@ -239,7 +241,7 @@ abstract class AbstractIndexHandler
             $parsedKey = $this->parseKey($key);
             list($relation, $column) = $parsedKey;
             $operation = $parsedKey[2] ?? "equal";
-            $relatedModelsField = str_replace("*", "%", \Request::get($key));
+            $relatedModelsField = str_replace("*", "%", $field);
             if ($i == 0) {
                 $query->whereHas($relation, function ($query) use ($relatedModelsField, $relation, $column, $operation, $i) {
                     $query->where($column, AbstractIndexHandler::SUPPORTED_OPERATIONS[$operation], $relatedModelsField);

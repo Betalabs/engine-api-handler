@@ -37,6 +37,9 @@ class Sort
             }*/
 
             if (!$sortElem instanceof Expression) {
+                // Same alias replacement of Filter and Field (aliased joins)
+                $sortElem = $this->replaceQualifiedAlias($sortElem);
+
                 //Check if ascending or descending(-) sort
                 if (preg_match('/^-.+/', $sortElem)) {
                     $direction = 'desc';
